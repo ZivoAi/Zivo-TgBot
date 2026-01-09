@@ -1,0 +1,65 @@
+{
+  "welcome": "Karibitswa kuZivoPal Classroom Bot",
+  "welcome_description": "Ndingabatsira kuzvirinda zvechikoro nemunhu waizvino, kurekedzera kwechikoro, neunyoro hwekudzidza.",
+  
+  "message_approved": "Shoko rako rwazvimirira.",
+  "message_deleted": "Shoko rako rakadezerwa nekuda kwokuvinga hunhu hwechikoro.",
+  "message_hidden": "Shoko rako rakavigwa kuti kuongezwa.",
+  
+  "warning_issued": "Watakura murango rwokuvinga hunhu hwechikoro.",
+  "warning_reason": "Mano: {{reason}}",
+  "warning_count": "Waunazviitiro {{count}}. {{count_warning}} zvimwe usati wamisiswa.",
+  
+  "student_muted": "Wakamiswa kunzira kwe {{duration}} maawa nekuda kwe {{reason}}.",
+  "mute_lifted": "Wabudirira kunzira uye unogona kunyora mitsara.",
+  "mute_status_check": "Uri kumiswa kunzira kusvika {{mutedUntil}}.",
+  
+  "assignment_due_soon": "Basa {{assignmentName}} raripo nemumaawa {{hoursLeft}}.",
+  "assignment_due_today": "Basa {{assignmentName}} raripo nhasi!",
+  "assignment_overdue": "Basa {{assignmentName}} rapfuura nguva.",
+  
+  "submission_received": "Takaedza basa rako {{assignmentName}}. Zikanaka!",
+  "submission_confirmed": "Edzo yakagadziriswa. Vachidzidzi vakazviziva.",
+  
+  "teacher_notification_warning": "{{studentName}} watakura murango rwokuvinga hunhu {{reason}}.",
+  "teacher_notification_mute": "{{studentName}} wakamiswa kunzira kwe {{duration}} maawa.",
+  "teacher_notification_submission": "{{studentName}} akaidza {{assignmentName}}.",
+  
+  "help_message": "Ndingabatsira nezve:\n• Mibvunzo yeMunzvimbo Yokudzidza\n• Kurima Mabasa\n• Zivo Zvechikoro\n• Kuzviziva Zvechikoro",
+  "help_commands": "Mirungu inogona kushandiswa:\n/start - Bata chikoro\n/help - Rudzidzo irwu\n/status - Zivo Zvako\n/leaderboard - Nhau Dzechikoro\n/assignments - Mabasa Ako",
+  
+  "error_generic": "Ndapindira mhosva. Ndimirire zvakare kana kuti kumbira muchidzidzi wako.",
+  "error_network": "Mhosva yeneti. Ongorora unzira yako.",
+  "error_invalid_input": "Kuedza kwakasarudzika. Cherechesa uye usvirire.",
+  "session_timeout": "Mhuri yako yakadzima. Shanduka zvakare.",
+  
+  "engagement_high": "Zviko zvako zvakanaka! Ramba ndizvo! 🌟",
+  "engagement_moderate": "Kugadzirisa kwako kwakakwana. Ringira mibvunzo.",
+  "engagement_low": "Zviko zvako zvidiki. Usatya kugadzirisa!",
+  
+  "quality_high": "Shoko rako rakanaka kwazvo!",
+  "quality_moderate": "Shoko rakakwana. Wedzera zvinhu.",
+  "quality_low": "Ringa kuziva zvinekunyora.",
+  
+  "leaderboard_title": "Nhau Dzechikoro (Zvinhu 10 Zvakakura)",
+  "leaderboard_you": "Iwe uri #{{rank}} nenzira {{score}}",
+  
+  "struggling_alert": "Takaona kuti unogona kunetsa. Ungade Rubatsiro?",
+  "help_offered": "Kumbira muchidzidzi wako rurekedu.",
+  
+  "policy_spam": "Mitsara inoparidza kana inodzokoranwa",
+  "policy_harassment": "Mitsara isingaiti zvikamu kana inokanikira",
+  "policy_bullying": "Mitsara inofa kana inozhura vamwe",
+  "policy_sexual": "Mitsara ine zvinhu zvevarume nevakadzi",
+  "policy_hate": "Mitsara inotukira mbiri dzingani",
+  "policy_off_topic": "Mitsara isingakwanisi kuwedzera chikoro",
+  
+  "curriculum_not_found": "Handisati ndakawana zvinhu pamusoro paizvozvi. Kumbira muchidzidzi wako!",
+  "curriculum_found": "Ndakawana zvinhu {{count}}",
+  "curriculum_confidence": "Kutenda: {{confidence}}%",
+  
+  "confirm_action": "Ndiwe uri nzira?",
+  "action_yes": "Iyai",
+  "action_no": "Kwete",
+  "action_cancel": "Siya"
+}

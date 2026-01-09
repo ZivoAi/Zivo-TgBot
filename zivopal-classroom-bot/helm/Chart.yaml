@@ -1,0 +1,19 @@
+apiVersion: helm.sh/v1
+kind: Chart
+metadata:
+  name: zivopal-classroom-bot
+  description: Telegram classroom bot for ZivoPal
+  type: application
+  version: 0.1.0
+  appVersion: 1.0.0
+  keywords:
+    - telegram
+    - classroom
+    - moderation
+    - engagement
+  home: https://github.com/zivopal/zivopal-classroom-bot
+  sources:
+    - https://github.com/zivopal/zivopal-classroom-bot
+  maintainers:
+    - name: ZivoPal Team
+      email: team@zivopal.com

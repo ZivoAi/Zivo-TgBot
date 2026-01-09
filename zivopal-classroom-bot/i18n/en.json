@@ -1,0 +1,65 @@
+{
+  "welcome": "Welcome to ZivoPal Classroom Bot",
+  "welcome_description": "I help manage your classroom with real-time moderation, engagement tracking, and learning support.",
+  
+  "message_approved": "Your message has been approved.",
+  "message_deleted": "Your message was deleted due to a policy violation.",
+  "message_hidden": "Your message was temporarily hidden for review.",
+  
+  "warning_issued": "You have received a warning for a policy violation.",
+  "warning_reason": "Reason: {{reason}}",
+  "warning_count": "You have {{count}} warning(s). {{count_warning}} more before mute.",
+  
+  "student_muted": "You have been muted for {{duration}} hours due to {{reason}}.",
+  "mute_lifted": "You have been unmuted and can send messages again.",
+  "mute_status_check": "You are currently muted until {{mutedUntil}}.",
+  
+  "assignment_due_soon": "Assignment \"{{assignmentName}}\" is due in {{hoursLeft}} hours.",
+  "assignment_due_today": "Assignment \"{{assignmentName}}\" is due today!",
+  "assignment_overdue": "Assignment \"{{assignmentName}}\" is overdue.",
+  
+  "submission_received": "We received your submission for {{assignmentName}}. Thank you!",
+  "submission_confirmed": "Submission confirmed. Teachers have been notified.",
+  
+  "teacher_notification_warning": "{{studentName}} has received a warning for {{reason}}.",
+  "teacher_notification_mute": "{{studentName}} has been muted for {{duration}} hours.",
+  "teacher_notification_submission": "{{studentName}} submitted {{assignmentName}}.",
+  
+  "help_message": "I can help with:\n• Answering curriculum questions\n• Tracking your assignments\n• Viewing engagement insights\n• Understanding classroom policies",
+  "help_commands": "Available commands:\n/start - Join the classroom\n/help - Show this message\n/status - Your engagement status\n/leaderboard - Class rankings\n/assignments - Your assignments",
+  
+  "error_generic": "Sorry, an error occurred. Please try again or contact your teacher.",
+  "error_network": "Network error. Please check your connection.",
+  "error_invalid_input": "Invalid input. Please check and try again.",
+  "session_timeout": "Your session has timed out. Please restart.",
+  
+  "engagement_high": "Great engagement! Keep it up! 🌟",
+  "engagement_moderate": "Good participation. Try answering more questions.",
+  "engagement_low": "Low participation. Don't be shy - join the discussion!",
+  
+  "quality_high": "Excellent message quality!",
+  "quality_moderate": "Good message. Add more detail for better insight.",
+  "quality_low": "Try to provide more detailed responses.",
+  
+  "leaderboard_title": "Class Engagement Leaderboard (Top 10)",
+  "leaderboard_you": "You are ranked #{{rank}} with {{score}} points",
+  
+  "struggling_alert": "We noticed you might be struggling. Would you like help?",
+  "help_offered": "Please reach out to your teacher for assistance.",
+  
+  "policy_spam": "Messages that are promotional or repetitive",
+  "policy_harassment": "Messages that are disrespectful or offensive",
+  "policy_bullying": "Messages that target or demean others",
+  "policy_sexual": "Messages with sexual or adult content",
+  "policy_hate": "Messages promoting hatred or discrimination",
+  "policy_off_topic": "Messages unrelated to class discussion",
+  
+  "curriculum_not_found": "I couldn't find information about that topic. Ask your teacher!",
+  "curriculum_found": "I found {{count}} related topics",
+  "curriculum_confidence": "Confidence: {{confidence}}%",
+  
+  "confirm_action": "Are you sure?",
+  "action_yes": "Yes",
+  "action_no": "No",
+  "action_cancel": "Cancel"
+}

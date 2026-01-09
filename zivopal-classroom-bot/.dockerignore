@@ -1,0 +1,13 @@
+.dockerignore
+node_modules
+npm-debug.log
+dist
+.git
+.gitignore
+README.md
+.env
+.env.example
+.eslintrc.js
+jest.config.js
+tsconfig.json
+src/__tests__

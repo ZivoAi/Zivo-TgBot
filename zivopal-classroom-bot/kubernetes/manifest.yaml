@@ -1,0 +1,195 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zivopal-classroom-bot
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: classroom-bot-config
+  namespace: zivopal-classroom-bot
+data:
+  NODE_ENV: production
+  LOG_LEVEL: info
+  PORT: "3000"
+  ZIVOPAL_API_URL: https://api.zivopal.com
+  DEFAULT_LANGUAGE: "en"
+  SUPPORTED_LANGUAGES: "en,sn"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_MAX: "100"
+  RATE_LIMIT_WINDOW_MS: "60000"
+  MODERATION_ENABLED: "true"
+  MODERATION_CONFIDENCE_THRESHOLD: "0.7"
+  LLM_PROVIDER: "mock"
+  REDIS_ENABLED: "false"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: classroom-bot-secrets
+  namespace: zivopal-classroom-bot
+type: Opaque
+stringData:
+  TELEGRAM_BOT_TOKEN: "REPLACE_WITH_TELEGRAM_BOT_TOKEN"
+  TELEGRAM_WEBHOOK_SECRET: "REPLACE_WITH_WEBHOOK_SECRET"
+  TELEGRAM_WEBHOOK_URL: "https://YOUR_DOMAIN/webhook"
+  ZIVOPAL_CLIENT_ID: "REPLACE_WITH_CLIENT_ID"
+  ZIVOPAL_CLIENT_SECRET: "REPLACE_WITH_CLIENT_SECRET"
+  OPENAI_API_KEY: ""
+  SENTRY_DSN: ""
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zivopal-classroom-bot
+  namespace: zivopal-classroom-bot
+  labels:
+    app: classroom-bot
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: classroom-bot
+  template:
+    metadata:
+      labels:
+        app: classroom-bot
+    spec:
+      serviceAccountName: classroom-bot
+      containers:
+      - name: bot
+        image: ghcr.io/zivopal/zivopal-classroom-bot:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: classroom-bot-config
+        - secretRef:
+            name: classroom-bot-secrets
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: classroom-bot-svc
+  namespace: zivopal-classroom-bot
+  labels:
+    app: classroom-bot
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: classroom-bot
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: classroom-bot-hpa
+  namespace: zivopal-classroom-bot
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: zivopal-classroom-bot
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: classroom-bot
+  namespace: zivopal-classroom-bot
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: classroom-bot-network-policy
+  namespace: zivopal-classroom-bot
+spec:
+  podSelector:
+    matchLabels:
+      app: classroom-bot
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80

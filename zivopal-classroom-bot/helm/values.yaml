@@ -1,0 +1,111 @@
+# Default values for zivopal-classroom-bot
+replicaCount: 2
+
+image:
+  registry: ghcr.io
+  repository: zivopal/zivopal-classroom-bot
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: classroom-bot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: classroom-bot-tls
+      hosts:
+        - classroom-bot.example.com
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+telegram:
+  botToken: ""
+  webhookSecret: ""
+  webhookUrl: ""
+
+zivopal:
+  apiUrl: "https://api.zivopal.com"
+  clientId: ""
+  clientSecret: ""
+  serviceName: "zivopal-classroom-bot"
+
+server:
+  port: 3000
+  nodeEnv: production
+
+logging:
+  level: info
+
+llm:
+  provider: mock  # "openai" or "mock"
+  model: "gpt-3.5-turbo"
+  apiKey: ""
+
+redis:
+  enabled: false
+  url: "redis://localhost:6379"
+
+rateLimit:
+  enabled: true
+  max: 100
+  windowMs: 60000
+
+moderation:
+  enabled: true
+  confidenceThreshold: 0.7
+
+i18n:
+  defaultLanguage: "en"
+  supportedLanguages: "en,sn"
+
+sentry:
+  enabled: false
+  dsn: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
