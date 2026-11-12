@@ -102,13 +102,16 @@ export function validateConfig(): void {
   const requiredEnvVars = [
     'TELEGRAM_BOT_TOKEN',
     'TELEGRAM_WEBHOOK_SECRET',
-    'ZIVOPAL_CLIENT_ID',
-    'ZIVOPAL_CLIENT_SECRET',
+    'ZIVOPAL_API_URL',
+    'ZIVOPAL_AI_SERVICE_KEY',
   ];
 
   for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
       throw new Error(`Missing required environment variable: ${envVar}`);
     }
+  }
+  if (!/^[A-Za-z0-9_-]{32,256}$/.test(process.env.TELEGRAM_WEBHOOK_SECRET ?? '')) {
+    throw new Error('TELEGRAM_WEBHOOK_SECRET must contain 32–256 URL-safe characters.');
   }
 }
