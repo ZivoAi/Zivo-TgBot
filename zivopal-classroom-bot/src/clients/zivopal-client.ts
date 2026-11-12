@@ -57,10 +57,9 @@ export class ZivoPalClient {
   public async sendAuditLog(log: AuditLog): Promise<void> {
     try {
       await this.authClient.request('POST', '/api/v1/audit', log);
-      logger.debug({ auditLog: log }, 'Audit log sent successfully');
+      logger.debug('Audit log sent successfully');
     } catch (error) {
       logger.error(
-        { error, auditLog: log },
         'Failed to send audit log to zivopal-core'
       );
       throw error;
@@ -73,10 +72,9 @@ export class ZivoPalClient {
   public async sendAnalytics(snapshot: AnalyticsSnapshot): Promise<void> {
     try {
       await this.authClient.request('POST', '/api/v1/analytics', snapshot);
-      logger.debug({ snapshot }, 'Analytics snapshot sent successfully');
+      logger.debug('Analytics snapshot sent successfully');
     } catch (error) {
       logger.error(
-        { error, snapshot },
         'Failed to send analytics to zivopal-core'
       );
       throw error;
@@ -89,10 +87,9 @@ export class ZivoPalClient {
   public async sendNotification(payload: NotificationPayload): Promise<void> {
     try {
       await this.authClient.request('POST', '/api/v1/notifications', payload);
-      logger.debug({ notification: payload }, 'Notification sent successfully');
+      logger.debug('Notification sent successfully');
     } catch (error) {
       logger.error(
-        { error, notification: payload },
         'Failed to send notification to zivopal-core'
       );
       throw error;
@@ -105,10 +102,9 @@ export class ZivoPalClient {
   public async submitAssignment(payload: SubmissionPayload): Promise<void> {
     try {
       await this.authClient.request('POST', '/api/v1/submissions', payload);
-      logger.debug({ submission: payload }, 'Submission forwarded successfully');
+      logger.debug('Submission forwarded successfully');
     } catch (error) {
       logger.error(
-        { error, submission: payload },
         'Failed to forward submission to zivopal-core'
       );
       throw error;
@@ -121,9 +117,9 @@ export class ZivoPalClient {
   public async flagMessage(payload: FlagPayload): Promise<void> {
     try {
       await this.authClient.request('POST', '/api/v1/flags', payload);
-      logger.debug({ flag: payload }, 'Message flagged successfully');
+      logger.debug('Message flagged successfully');
     } catch (error) {
-      logger.error({ error, flag: payload }, 'Failed to flag message in zivopal-core');
+      logger.error('Failed to flag message in zivopal-core');
       throw error;
     }
   }
@@ -145,7 +141,6 @@ export class ZivoPalClient {
       return result;
     } catch (error) {
       logger.error(
-        { error, classId, userId },
         'Failed to retrieve mute status from zivopal-core'
       );
       throw error;
@@ -167,10 +162,9 @@ export class ZivoPalClient {
         `/api/v1/classes/${classId}/students/${userId}/mute-status`,
         { mutedUntil, reason }
       );
-      logger.debug({ classId, userId, mutedUntil }, 'Mute status updated');
+      logger.debug('Mute status updated');
     } catch (error) {
       logger.error(
-        { error, classId, userId },
         'Failed to set mute status in zivopal-core'
       );
       throw error;
