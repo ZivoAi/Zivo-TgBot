@@ -1,0 +1,39 @@
+name: Telegram AI contract checks
+
+"on":
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-ai-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: zivopal-classroom-bot
+    env:
+      CI: "true"
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      # No lockfile exists in this package; retain its existing npm contract.
+      - name: Install declared dependencies without lifecycle scripts
+        run: npm install --include=dev --ignore-scripts --package-lock=false --no-audit --no-fund
+      - name: Build all bot source and verify local Core routing
+        run: npm run test:core-contract
+      - name: Run normal tests with the existing coverage thresholds
+        run: npm test -- --runInBand
