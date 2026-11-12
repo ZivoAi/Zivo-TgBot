@@ -67,6 +67,59 @@ test('lifecycle validates configuration and propagates startup/shutdown failures
   await expect(server.stop()).rejects.toThrow('Synthetic close failure');
   close.mockRestore(); await server.stop();
 });
+test('opted-in readiness waits for webhook registration without making real Telegram calls', async () => {
+  const previousUrl = config.telegram.webhookUrl;
+  process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED = 'true';
+  config.telegram.webhookUrl = 'https://synthetic-bot.example/webhook';
+  try {
+    const pending = await app.inject('/readiness');
+    expect(pending.statusCode).toBe(503);
+    expect(pending.json().services.webhookRegistration).toBe('pending');
+    jest.spyOn(app, 'listen').mockResolvedValue('http://127.0.0.1');
+    const api = server.getInstances().telegramHandler.getBot().api;
+    jest.spyOn(api, 'getWebhookInfo').mockResolvedValue({
+      url: '', has_custom_certificate: false, pending_update_count: 0,
+    });
+    const set = jest.spyOn(api, 'setWebhook').mockResolvedValue(true);
+    await server.start();
+    expect(set).toHaveBeenCalledTimes(1);
+    const ready = await app.inject('/readiness');
+    expect(ready.statusCode).toBe(200);
+    expect(ready.json()).toMatchObject({
+      ready: true, check: 'configuration_and_webhook_registration',
+      services: { webhookRegistration: 'configured' },
+    });
+  } finally {
+    delete process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED;
+    config.telegram.webhookUrl = previousUrl;
+  }
+});
+test('failed registration closes the server and returns only a sanitized error', async () => {
+  const previousUrl = config.telegram.webhookUrl;
+  process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED = 'true';
+  config.telegram.webhookUrl = 'https://synthetic-bot.example/webhook';
+  try {
+    jest.spyOn(app, 'listen').mockResolvedValue('http://127.0.0.1');
+    const close = jest.spyOn(app, 'close');
+    jest.spyOn(server.getInstances().telegramHandler.getBot().api, 'getWebhookInfo')
+      .mockRejectedValue(new Error('synthetic-credential-not-for-logs'));
+    await expect(server.start()).rejects.not.toThrow('synthetic-credential-not-for-logs');
+    expect(close).toHaveBeenCalled();
+  } finally {
+    delete process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED;
+    config.telegram.webhookUrl = previousUrl;
+  }
+});
+test('webhook setup requires an exact explicit boolean setting', () => {
+  try {
+    process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED = 'typo';
+    expect(validateConfig).toThrow('TELEGRAM_WEBHOOK_SETUP_ENABLED must be true or false');
+    process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED = 'false';
+    expect(validateConfig).not.toThrow();
+  } finally {
+    delete process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED;
+  }
+});
 test('validation refuses missing or malformed secrets without printing values', () => {
   delete process.env.ZIVOPAL_AI_SERVICE_KEY;
   expect(validateConfig).toThrow('ZIVOPAL_AI_SERVICE_KEY');
