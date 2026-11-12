@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import jwt from 'jsonwebtoken';
-import { config } from './config';
-import { logger } from './logger';
+import { config } from '../config';
+import { logger } from '../logger';
 
 export interface ServiceToken {
   accessToken: string;
@@ -38,19 +37,7 @@ export class ZivoPalAuthClient {
    * In production, use proper OAuth2 client-credentials flow
    */
   private generateServiceJWT(): string {
-    const payload = {
-      sub: config.zivopal.clientId,
-      iss: config.zivopal.serviceName,
-      aud: 'zivopal-core',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
-    };
-
-    const token = jwt.sign(payload, config.zivopal.clientSecret, {
-      algorithm: 'HS256',
-    });
-
-    return token;
+    throw new AuthenticationError('Legacy service JWT minting is disabled. Use a registered Core service adapter.');
   }
 
   /**
