@@ -1,5 +1,5 @@
-import { MockLLMClassifier } from '../../modules/moderation/llm-classifier';
-import { ModerationPolicyEngine } from '../../modules/moderation/policy-engine';
+import { MockLLMClassifier } from '../modules/moderation/llm-classifier';
+import { ModerationPolicyEngine } from '../modules/moderation/policy-engine';
 
 describe('Moderation LLM Classifier', () => {
   let classifier: MockLLMClassifier;
@@ -114,6 +114,12 @@ describe('Moderation Policy Engine', () => {
 
     expect(result.type).toBe('mute');
     expect(result.duration).toBe(3600000);
+    const repeated = engine.decideAction('class-1', 'student-2', {
+      category: 'spam', severity: 'medium', confidence: 0.8,
+      rationale: 'Repeated synthetic violation', shouldAction: true,
+    });
+    expect(repeated.type).toBe('mute');
+    expect(repeated.duration).toBe(86400000);
   });
 
   it('should auto-delete high severity messages', () => {
