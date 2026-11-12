@@ -26,7 +26,7 @@ export interface Config {
     url: string;
   };
   llm: {
-    provider: 'openai' | 'mock';
+    provider: 'core' | 'openai' | 'mock';
     model: string;
     apiKey?: string;
   };
@@ -73,7 +73,7 @@ export const config: Config = {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
   },
   llm: {
-    provider: (process.env.LLM_PROVIDER as 'openai' | 'mock') || 'mock',
+    provider: (process.env.LLM_PROVIDER as 'core' | 'openai' | 'mock') || (process.env.NODE_ENV === 'production' ? 'core' : 'mock'),
     model: process.env.LLM_MODEL || 'gpt-3.5-turbo',
     apiKey: process.env.OPENAI_API_KEY,
   },
