@@ -1,5 +1,5 @@
 import { ZivoPalAuthClient } from './zivopal-auth';
-import { logger, AuditLog, createAuditLog } from '../logger';
+import { logger, AuditLog } from '../logger';
 
 export interface NotificationPayload {
   classId: string;
