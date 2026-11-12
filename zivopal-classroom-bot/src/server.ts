@@ -3,11 +3,11 @@ import fastifyHelmet from '@fastify/helmet';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyCors from '@fastify/cors';
 import crypto from 'crypto';
-import { config } from './config';
-import { logger } from './logger';
+import { config, validateConfig } from './config';
+import { logger, httpLoggerOptions } from './logger';
 import { TelegramWebhookHandler } from './telegram/webhook-handler';
 import { ZivoPalClient } from './clients/zivopal-client';
-import { createClassifier, ModerationResult } from './modules/moderation/llm-classifier';
+import { createClassifier } from './modules/moderation/llm-classifier';
 import { ModerationPolicyEngine } from './modules/moderation/policy-engine';
 import { EngagementScoreEngine } from './modules/engagement/score-engine';
 import { CurriculumService } from './modules/curriculum/service';
@@ -25,7 +25,7 @@ export class Server {
 
   constructor() {
     this.fastify = Fastify({
-      logger: logger,
+      logger: httpLoggerOptions,
       trustProxy: true,
     });
 
@@ -72,8 +72,8 @@ export class Server {
     }
 
     // Global error handler
-    this.fastify.setErrorHandler((error, request, reply) => {
-      logger.error({ error, path: request.url }, 'Unhandled error');
+    this.fastify.setErrorHandler((_error, request, reply) => {
+      logger.error({ path: request.url.split('?')[0] }, 'Unhandled error');
       reply.status(500).send({
         error: 'Internal Server Error',
         requestId: request.id,
@@ -92,21 +92,24 @@ export class Server {
 
     // Readiness check
     this.fastify.get('/readiness', async (_request, reply) => {
+      const ready = Boolean(config.telegram.botToken && config.telegram.webhookSecret &&
+        process.env.ZIVOPAL_API_URL && process.env.ZIVOPAL_AI_SERVICE_KEY);
       reply.send({
-        ready: true,
+        ready,
+        check: 'configuration_only',
         services: {
-          telegram: true,
-          zivopal: true,
+          telegramConfigured: Boolean(config.telegram.botToken && config.telegram.webhookSecret),
+          coreConfigured: Boolean(process.env.ZIVOPAL_API_URL && process.env.ZIVOPAL_AI_SERVICE_KEY),
         },
       });
     });
 
     // Telegram webhook
     this.fastify.post('/webhook', async (request: FastifyRequest, reply: FastifyReply) => {
-      const signature = request.headers['x-telegram-bot-api-secret-sha256'];
+      const signature = request.headers['x-telegram-bot-api-secret-token'];
 
       // Validate webhook authenticity
-      if (!this.validateWebhookSignature(request.body as Record<string, unknown>, signature as string)) {
+      if (!this.validateWebhookSignature(signature)) {
         logger.warn('Invalid webhook signature');
         reply.status(401).send({ error: 'Unauthorized' });
         return;
@@ -116,7 +119,7 @@ export class Server {
         await this.telegramHandler.handleUpdate(request.body);
         reply.status(200).send({ ok: true });
       } catch (error) {
-        logger.error({ error }, 'Webhook processing failed');
+        logger.error('Webhook processing failed');
         reply.status(500).send({ error: 'Processing failed' });
       }
     });
@@ -129,6 +132,17 @@ export class Server {
    * Setup teacher dashboard and management routes
    */
   private setupTeacherRoutes(): void {
+    // These legacy endpoints have no Core user RBAC contract. Never expose
+    // engagement/learner information to an unauthenticated public request.
+    this.fastify.addHook('preHandler', async (request, reply) => {
+      if (!request.url.startsWith('/api/v1/')) return;
+      const expected = process.env.ZIVOPAL_AI_SERVICE_KEY ?? '';
+      const given = request.headers['x-service-key'];
+      const a = Buffer.from(expected), b = Buffer.from(typeof given === 'string' ? given : '');
+      if (!a.length || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+        reply.status(401).send({ error: 'Private service access required' });
+      }
+    });
     // Get class engagement report
     this.fastify.get<{ Params: { classId: string } }>(
       '/api/v1/teachers/classes/:classId/report',
@@ -236,13 +250,10 @@ export class Server {
   /**
    * Validate incoming webhook signature
    */
-  private validateWebhookSignature(body: Record<string, unknown>, signature: string): boolean {
-    const secretHash = crypto
-      .createHmac('sha256', config.telegram.webhookSecret)
-      .update(JSON.stringify(body))
-      .digest('hex');
-
-    return secretHash === signature;
+  private validateWebhookSignature(signature: unknown): boolean {
+    const a = Buffer.from(config.telegram.webhookSecret);
+    const b = Buffer.from(typeof signature === 'string' ? signature : '');
+    return a.length > 0 && a.length === b.length && crypto.timingSafeEqual(a, b);
   }
 
   /**
@@ -250,7 +261,7 @@ export class Server {
    */
   public async start(): Promise<void> {
     try {
-      config.validateConfig?.();
+      validateConfig();
       await this.fastify.listen({ port: config.server.port, host: '0.0.0.0' });
       logger.info(`Server listening on port ${config.server.port}`);
     } catch (error) {
