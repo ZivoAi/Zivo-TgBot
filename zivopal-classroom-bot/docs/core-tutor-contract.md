@@ -53,10 +53,17 @@ Telegram Bot API calls have a separate ten-second timeout.
 Success: `{ confirmationRequired: true }`, no Core identity details.
 
 `POST /api/ai/internal/telegram/chat`:
-`{ botId, telegramUserId, chatId, chatType: "private", updateId, message }`.
+`{ botId, telegramUserId, chatId, chatType: "private", updateId, message, messageDate }`.
 Success: `{ reply, requiresTeacherReview, curriculumCoverage, sources }`.
 
 Both require `X-Service-Key`, matching Core's `TELEGRAM_AI_SERVICE_KEY`.
+Private linking/tutoring requires a service credential of at least 32 characters;
+generate it randomly and store it only through the hosting secrets controls.
+`messageDate` is the original Telegram `message.date` in Unix seconds, never the
+retry time. Core accepts at most twenty-four-hour-old messages and sixty seconds
+of forward skew. This lets seven-day-old request markers be purged without an
+original Telegram retry causing a fresh paid call. Do not assume update IDs are
+monotonic forever: Telegram may randomize the next ID after a week of inactivity.
 Sender/bot/chat IDs come from the verified Telegram update and initialized
 grammY bot info. Core rejects mismatched IDs/groups and ignores supplied role,
 Core account IDs, child IDs, history and alleged curriculum documents.
@@ -75,6 +82,8 @@ Bot: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_WEBHOOK_URL`,
 `ZIVOPAL_API_URL`, `ZIVOPAL_AI_SERVICE_KEY`, `LLM_PROVIDER`, `NODE_ENV`.
 Core: `TELEGRAM_AI_SERVICE_KEY`, `TELEGRAM_BOT_ID`, `TELEGRAM_BOT_USERNAME`,
 and the existing AI Engine/OpenAI/school-entitlement configuration.
+Core also requires explicit `TELEGRAM_RETENTION_CLEANUP_ENABLED` opt-in before
+private linking/tutoring is enabled. It defaults off pending retention approval.
 Do not copy credential values to frontend configuration.
 
 Register the existing HTTPS `/webhook` using Telegram `setWebhook` with
@@ -98,15 +107,25 @@ synthetic Core/Telegram responses only. No outside requests.
 Existing Jest suites cover curriculum metadata, i18n, engagement and policy
 logic; these do not demonstrate actual curriculum retrieval.
 `npm run test:core-contract` builds then runs both isolated contract scripts.
-All thirty existing Jest tests pass, but the unchanged coverage-gated `npm test`
-still fails: 31.05% line coverage versus its 80% requirement. The Node contract
-scripts do not contribute to Jest's coverage counters. That coverage gate was
-not weakened; CI/coverage work remains before calling the bot production-ready.
+The normal coverage-gated `npm test` now passes 86 tests: 98.48% lines, 98.32%
+statements, 98.79% functions and 88.57% branches. The 80% requirements and source
+coverage inclusion rules were not weakened. Tests exercise actual source
+transport, grammY routing, Fastify endpoints/lifecycle, moderation and failure
+paths with synthetic responses; no actual service/provider calls occur.
+Dead JWT/token-cache/retry code was removed from the disabled legacy adapter;
+its interface still fails explicitly. Legacy forwarding logs no longer include
+payloads, learner identifiers or raw exceptions.
 
 Before enabling: separately approved Core/bot rollout and additive migrations,
 real configured bot identity and webhook registration, production entitlement
-check, documented cleanup/retention for challenges/links/request markers and
-Core conversations, and a consented low-cost synthetic live AI acceptance test.
-Do not purge request markers without a durable anti-replay watermark/expiry
-design: deleting a marker currently permits an old update to trigger another
-provider call. There is no quota/financial hard cap across replicas yet.
+check, approval of the proposed retention policy/opt-in and a consented low-cost
+synthetic live AI acceptance test.
+
+Core now implements opt-in, bounded retention cleanup: challenges one day after
+expiry, inactive request markers after seven days, revoked links after ninety
+days, and Telegram-origin conversations after ninety inactive days. Ordinary web
+conversations are excluded by server-owned provenance, not ID naming. Core
+returns the actual cleanup-enabled state/policy to the profile UI. Disconnection
+is not deletion from Telegram/devices, and no cleanup was enabled in production.
+See Core's docs/ai-data-migrations.md for dry-run/apply commands and consequences.
+There is still no quota/financial hard cap across replicas.
