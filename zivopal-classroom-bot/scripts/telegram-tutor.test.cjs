@@ -11,7 +11,7 @@ const { CoreTutorClient, CoreTutorError } = require('../dist/clients/core-tutor'
 const { TelegramWebhookHandler } = require('../dist/telegram/webhook-handler');
 const { ZivoPalAuthClient } = require('../dist/clients/zivopal-auth');
 const { Server } = require('../dist/server');
-const identity = { botId: '777', telegramUserId: '12345', chatId: '12345', chatType: 'private' };
+const identity = { botId: '777', telegramUserId: '12345', chatId: '12345', chatType: 'private', messageDate: Math.floor(Date.now() / 1000) };
 async function main() {
   let requests = [];
   global.fetch = async (url, options) => {
@@ -55,7 +55,7 @@ async function main() {
     throw new Error('External Telegram request refused');
   });
   const update = (id, text, type = 'private', fromId = 12345, chatId = type === 'private' ? fromId : -1001) => ({
-    update_id: id, message: { message_id: id, date: 0, from: { id: fromId, is_bot: false, first_name: 'Fixture' },
+    update_id: id, message: { message_id: id, date: identity.messageDate, from: { id: fromId, is_bot: false, first_name: 'Fixture' },
       chat: { id: chatId, type }, text },
   });
   await handler.handleUpdate(update(1, 'Synthetic private question'));
