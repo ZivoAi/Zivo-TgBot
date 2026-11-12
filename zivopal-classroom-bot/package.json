@@ -9,6 +9,7 @@
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js",
     "test": "jest --coverage",
+    "test:core-contract": "npm run build && node scripts/core-ai-contract.test.cjs && node scripts/telegram-tutor.test.cjs",
     "test:watch": "jest --watch",
     "test:integration": "jest --testPathPattern=integration --runInBand",
     "lint": "eslint src --ext .ts",
