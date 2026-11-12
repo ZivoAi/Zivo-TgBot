@@ -1,4 +1,4 @@
-import { EngagementScoreEngine } from '../../modules/engagement/score-engine';
+import { EngagementScoreEngine } from '../modules/engagement/score-engine';
 
 describe('Engagement Score Engine', () => {
   let engine: EngagementScoreEngine;

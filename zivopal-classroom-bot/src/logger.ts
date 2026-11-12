@@ -1,8 +1,27 @@
 import pino, { Logger } from 'pino';
 import { config } from './config';
 
+export const httpLoggerOptions = {
+  level: config.logging.level,
+  redact: {
+    paths: ['req.headers.authorization', 'req.headers["x-service-key"]',
+      'req.headers["x-telegram-bot-api-secret-token"]', 'update', 'body',
+      '*.update', '*.body', '*.code', '*.botToken', '*.clientSecret'],
+    censor: '[REDACTED]',
+  },
+  serializers: {
+    req: (req: { method?: unknown; url?: unknown }) => ({ method: typeof req.method === 'string' ? req.method : undefined, url: String(req.url ?? '').split('?')[0] }),
+  },
+};
+
 const pinoConfig: pino.LoggerOptions = {
   level: config.logging.level,
+  redact: {
+    paths: ['req.headers.authorization', 'req.headers["x-service-key"]',
+      'req.headers["x-telegram-bot-api-secret-token"]', 'update', 'body',
+      '*.update', '*.body', '*.code', '*.botToken', '*.clientSecret'],
+    censor: '[REDACTED]',
+  },
   transport:
     config.server.nodeEnv === 'development'
       ? {
@@ -15,7 +34,7 @@ const pinoConfig: pino.LoggerOptions = {
         }
       : undefined,
   serializers: {
-    req: pino.stdSerializers.req,
+    req: req => ({ method: req.method, url: String(req.url ?? '').split('?')[0] }),
     res: pino.stdSerializers.res,
     err: pino.stdSerializers.err,
   },

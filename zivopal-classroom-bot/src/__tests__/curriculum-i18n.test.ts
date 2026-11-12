@@ -1,5 +1,5 @@
-import { CurriculumService } from '../../modules/curriculum/service';
-import { I18nService } from '../../modules/i18n/service';
+import { CurriculumService } from '../modules/curriculum/service';
+import { I18nService } from '../modules/i18n/service';
 
 describe('Curriculum Service', () => {
   let service: CurriculumService;

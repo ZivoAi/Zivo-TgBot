@@ -72,30 +72,56 @@ export class MockLLMClassifier implements LLMClassifier {
 }
 
 /**
- * OpenAI-based classifier using GPT for moderation
+ * Moderation through Core. The bot never receives a model-provider credential.
  */
-export class OpenAILLMClassifier implements LLMClassifier {
-  private apiKey: string;
-  private model: string;
-
-  constructor(apiKey: string, model: string = 'gpt-3.5-turbo') {
-    this.apiKey = apiKey;
-    this.model = model;
+export class CoreLLMClassifier implements LLMClassifier {
+  private url: URL;
+  private key: string;
+  constructor() {
+    const base = process.env.ZIVOPAL_API_URL;
+    const key = process.env.ZIVOPAL_AI_SERVICE_KEY;
+    if (!base || !key) throw new Error('Core moderation requires ZIVOPAL_API_URL and ZIVOPAL_AI_SERVICE_KEY');
+    const url = new URL(base);
+    if (url.username || url.password || (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) {
+      throw new Error('Core moderation requires a secure Core URL');
+    }
+    this.url = new URL('/api/ai/internal/moderate', url);
+    this.key = key;
   }
 
   public async classify(text: string, _context?: Record<string, unknown>): Promise<ModerationResult> {
-    // Implementation would use OpenAI API
-    // For now, return mock result
-    return new MockLLMClassifier().classify(text);
+    try {
+      const response = await fetch(this.url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Service-Key': this.key },
+        body: JSON.stringify({ text }), signal: AbortSignal.timeout(25_000),
+      });
+      if (!response.ok) throw new Error('Core moderation unavailable');
+      const value = await response.json() as ModerationResult;
+      if (!['spam', 'insult_harassment', 'bullying', 'sexual_content', 'hate', 'off_topic', 'harmless'].includes(value.category) ||
+          !['low', 'medium', 'high'].includes(value.severity) || typeof value.confidence !== 'number' ||
+          !Number.isFinite(value.confidence) || value.confidence < 0 || value.confidence > 1 ||
+          typeof value.shouldAction !== 'boolean') throw new Error('Invalid moderation');
+      return { ...value, rationale: 'Core classification; manual review remains available.' };
+    } catch {
+      // Never turn an outage into a mocked "harmless" result or expose transport headers.
+      throw new Error('Core moderation unavailable; no AI classification was confirmed');
+    }
   }
 }
 
-export function createClassifier(provider: 'openai' | 'mock', config: {
+/** @deprecated Compatibility name; uses Core, never the supplied provider key. */
+export class OpenAILLMClassifier extends CoreLLMClassifier {
+  constructor(_legacyApiKey?: string, _legacyModel?: string) { super(); }
+}
+
+export function createClassifier(provider: 'core' | 'openai' | 'mock', _config: {
   apiKey?: string;
   model?: string;
 }): LLMClassifier {
-  if (provider === 'openai' && config.apiKey) {
-    return new OpenAILLMClassifier(config.apiKey, config.model);
+  if (provider === 'mock') {
+    if (process.env.NODE_ENV === 'production') throw new Error('Mock moderation is not permitted in production');
+    return new MockLLMClassifier();
   }
-  return new MockLLMClassifier();
+  // The legacy "openai" setting is an alias for the central gateway, not a direct provider.
+  return new CoreLLMClassifier();
 }
