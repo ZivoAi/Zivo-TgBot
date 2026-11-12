@@ -60,7 +60,7 @@ export class TelegramWebhookHandler {
   private identity(ctx: Context): PrivateIdentity | null {
     if (ctx.chat?.type !== 'private' || !ctx.from || ctx.from.is_bot ||
         ctx.chat.id !== ctx.from.id || !Number.isSafeInteger(ctx.from.id) || !Number.isSafeInteger(ctx.me.id)) return null;
-    return { botId: String(ctx.me.id), telegramUserId: String(ctx.from.id), chatId: String(ctx.chat.id), chatType: 'private' };
+    return { botId: String(ctx.me.id), telegramUserId: String(ctx.from.id), chatId: String(ctx.chat.id), chatType: 'private', messageDate: ctx.message?.date ?? 0 };
   }
 
   /**
