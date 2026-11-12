@@ -1,4 +1,4 @@
-export type PrivateIdentity = { botId: string; telegramUserId: string; chatId: string; chatType: 'private' };
+export type PrivateIdentity = { botId: string; telegramUserId: string; chatId: string; chatType: 'private'; messageDate: number };
 export class CoreTutorError extends Error {}
 export class CoreTutorClient {
   constructor(
