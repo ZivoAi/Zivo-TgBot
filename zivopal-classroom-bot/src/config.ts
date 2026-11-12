@@ -99,6 +99,10 @@ export const config: Config = {
 };
 
 export function validateConfig(): void {
+  if (process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED !== undefined &&
+      !['true', 'false'].includes(process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED)) {
+    throw new Error('TELEGRAM_WEBHOOK_SETUP_ENABLED must be true or false.');
+  }
   const requiredEnvVars = [
     'TELEGRAM_BOT_TOKEN',
     'TELEGRAM_WEBHOOK_SECRET',
