@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { config, validateConfig } from './config';
 import { logger, httpLoggerOptions } from './logger';
 import { TelegramWebhookHandler } from './telegram/webhook-handler';
+import { configureTelegramWebhook } from './telegram/webhook-setup';
 import { ZivoPalClient } from './clients/zivopal-client';
 import { createClassifier } from './modules/moderation/llm-classifier';
 import { ModerationPolicyEngine } from './modules/moderation/policy-engine';
@@ -22,6 +23,7 @@ export class Server {
   private classificationEngine: ReturnType<typeof createClassifier>;
   private curriculumService: CurriculumService;
   private i18nService: I18nService;
+  private webhookRegistered = false;
 
   constructor() {
     this.fastify = Fastify({
@@ -92,14 +94,18 @@ export class Server {
 
     // Readiness check
     this.fastify.get('/readiness', async (_request, reply) => {
+      const setupEnabled = process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED === 'true';
       const ready = Boolean(config.telegram.botToken && config.telegram.webhookSecret &&
-        process.env.ZIVOPAL_API_URL && process.env.ZIVOPAL_AI_SERVICE_KEY);
-      reply.send({
+        process.env.ZIVOPAL_API_URL && process.env.ZIVOPAL_AI_SERVICE_KEY &&
+        (!setupEnabled || this.webhookRegistered));
+      reply.code(ready ? 200 : 503).send({
         ready,
-        check: 'configuration_only',
+        check: setupEnabled ? 'configuration_and_webhook_registration' : 'configuration_only',
         services: {
           telegramConfigured: Boolean(config.telegram.botToken && config.telegram.webhookSecret),
           coreConfigured: Boolean(process.env.ZIVOPAL_API_URL && process.env.ZIVOPAL_AI_SERVICE_KEY),
+          webhookRegistration: setupEnabled
+            ? (this.webhookRegistered ? 'configured' : 'pending') : 'not_checked',
         },
       });
     });
@@ -263,9 +269,15 @@ export class Server {
     try {
       validateConfig();
       await this.fastify.listen({ port: config.server.port, host: '0.0.0.0' });
+      this.webhookRegistered = await configureTelegramWebhook(this.telegramHandler.getBot().api, {
+        enabled: process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED === 'true',
+        url: config.telegram.webhookUrl,
+        secret: config.telegram.webhookSecret,
+      }) === 'configured';
       logger.info(`Server listening on port ${config.server.port}`);
     } catch (error) {
-      logger.error({ error }, 'Failed to start server');
+      await this.fastify.close();
+      logger.error('Failed to start server; check required configuration and webhook setup');
       throw error;
     }
   }
