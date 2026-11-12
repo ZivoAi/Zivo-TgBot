@@ -53,6 +53,19 @@ export class CoreTutorClient {
       ? '\n\nCurriculum source documents have not been verified for this reply.' : '';
     const review = result.requiresTeacherReview === true
       ? '\nAssessment or marking suggestions require teacher review.' : '';
-    return result.reply.slice(0, 4000 - notice.length - review.length) + notice + review;
+    const budget = 4000 - notice.length - review.length;
+    const marker = '\n\nSubject references (curriculum alignment unverified):\n';
+    const at = result.reply.lastIndexOf(marker);
+    if (at < 0) return result.reply.slice(0, budget) + notice + review;
+    const attribution = result.reply.slice(at);
+    // Attribution must survive Telegram's message limit. Never silently drop it.
+    if (attribution.length > 2000) throw new CoreTutorError('This answer cannot be delivered safely in Telegram. Use ZivoPal instead.');
+    const body = result.reply.slice(0, at);
+    const shortened = '\n[Answer shortened to retain source references.]';
+    const available = budget - attribution.length;
+    const answer = body.length > available
+      ? body.slice(0, available - shortened.length).replace(/[\uD800-\uDBFF]$/, '') + shortened
+      : body;
+    return answer + attribution + notice + review;
   }
 }
