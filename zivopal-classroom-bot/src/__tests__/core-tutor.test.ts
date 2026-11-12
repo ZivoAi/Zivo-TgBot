@@ -14,6 +14,29 @@ beforeEach(() => {
 afterEach(() => { global.fetch = originalFetch; jest.useRealTimers(); });
 const client = () => new CoreTutorClient('https://core.example.invalid/', 'synthetic-service-key');
 
+test('keeps source attribution and licence links intact when a long answer is shortened', async () => {
+  const attribution = '\n\nSubject references (curriculum alignment unverified):\n[1] Siyavula — CC BY 3.0. https://example.invalid/source\nLicence: https://creativecommons.org/licenses/by/3.0/';
+  transport.mockResolvedValue(new Response(JSON.stringify({
+    reply: 'A'.repeat(5000) + attribution, curriculumCoverage: 'unverified', requiresTeacherReview: true,
+  })));
+  const answer = await client().chat(identity, 'source-test', 'Synthetic question');
+  expect(answer.length).toBeLessThanOrEqual(4000);
+  expect(answer).toContain('Answer shortened to retain source references');
+  expect(answer).toContain(attribution);
+  expect(answer).toContain('require teacher review');
+});
+test('keeps a short sourced answer unchanged apart from established notices', async () => {
+  const reply = 'An explanation.\n\nSubject references (curriculum alignment unverified):\n[1] Source and licence.';
+  transport.mockResolvedValue(new Response(JSON.stringify({ reply })));
+  expect(await client().chat(identity, 'source-short', 'Synthetic')).toBe(reply);
+});
+test('fails explicitly rather than stripping an oversized attribution block', async () => {
+  transport.mockResolvedValue(new Response(JSON.stringify({
+    reply: 'Explanation.\n\nSubject references (curriculum alignment unverified):\n' + 'source'.repeat(500),
+  })));
+  await expect(client().chat(identity, 'source-too-long', 'Synthetic')).rejects.toThrow(CoreTutorError);
+});
+
 test('uses only the private service header and exact Core chat contract', async () => {
   transport.mockResolvedValue(new Response(JSON.stringify({ reply: 'Synthetic reply' })));
   expect(await client().chat(identity, '2', 'Synthetic question')).toBe('Synthetic reply');
