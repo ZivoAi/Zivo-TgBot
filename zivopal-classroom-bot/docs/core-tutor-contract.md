@@ -97,6 +97,11 @@ synthetic Core/Telegram responses only. No outside requests.
 `scripts/core-ai-contract.test.cjs`: four moderation adapter checks.
 Existing Jest suites cover curriculum metadata, i18n, engagement and policy
 logic; these do not demonstrate actual curriculum retrieval.
+`npm run test:core-contract` builds then runs both isolated contract scripts.
+All thirty existing Jest tests pass, but the unchanged coverage-gated `npm test`
+still fails: 31.05% line coverage versus its 80% requirement. The Node contract
+scripts do not contribute to Jest's coverage counters. That coverage gate was
+not weakened; CI/coverage work remains before calling the bot production-ready.
 
 Before enabling: separately approved Core/bot rollout and additive migrations,
 real configured bot identity and webhook registration, production entitlement
