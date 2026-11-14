@@ -26,7 +26,7 @@ export interface Config {
     url: string;
   };
   llm: {
-    provider: 'openai' | 'mock';
+    provider: 'core' | 'openai' | 'mock';
     model: string;
     apiKey?: string;
   };
@@ -73,7 +73,7 @@ export const config: Config = {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
   },
   llm: {
-    provider: (process.env.LLM_PROVIDER as 'openai' | 'mock') || 'mock',
+    provider: (process.env.LLM_PROVIDER as 'core' | 'openai' | 'mock') || (process.env.NODE_ENV === 'production' ? 'core' : 'mock'),
     model: process.env.LLM_MODEL || 'gpt-3.5-turbo',
     apiKey: process.env.OPENAI_API_KEY,
   },
@@ -99,16 +99,23 @@ export const config: Config = {
 };
 
 export function validateConfig(): void {
+  if (process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED !== undefined &&
+      !['true', 'false'].includes(process.env.TELEGRAM_WEBHOOK_SETUP_ENABLED)) {
+    throw new Error('TELEGRAM_WEBHOOK_SETUP_ENABLED must be true or false.');
+  }
   const requiredEnvVars = [
     'TELEGRAM_BOT_TOKEN',
     'TELEGRAM_WEBHOOK_SECRET',
-    'ZIVOPAL_CLIENT_ID',
-    'ZIVOPAL_CLIENT_SECRET',
+    'ZIVOPAL_API_URL',
+    'ZIVOPAL_AI_SERVICE_KEY',
   ];
 
   for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
       throw new Error(`Missing required environment variable: ${envVar}`);
     }
+  }
+  if (!/^[A-Za-z0-9_-]{32,256}$/.test(process.env.TELEGRAM_WEBHOOK_SECRET ?? '')) {
+    throw new Error('TELEGRAM_WEBHOOK_SECRET must contain 32–256 URL-safe characters.');
   }
 }

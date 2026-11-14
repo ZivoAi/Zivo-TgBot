@@ -1,5 +1,5 @@
 import { ModerationResult } from './llm-classifier';
-import { logger, createAuditLog } from '../../logger';
+import { logger } from '../../logger';
 
 export interface ModerationAction {
   type: 'none' | 'warn' | 'mute' | 'delete';
@@ -107,11 +107,15 @@ export class ModerationPolicyEngine {
       if (
         state.violationCount >= policy.warningThreshold + policy.muteThresholdAfterWarnings
       ) {
-        // Repeated violations: severe mute
+        // Use the configured initial mute at the first threshold crossing.
+        // Escalate only on a subsequent violation, not on the first mute.
+        const firstMuteAt = policy.warningThreshold + policy.muteThresholdAfterWarnings;
+        const duration = state.violationCount === firstMuteAt
+          ? policy.initialMuteDurationMs : policy.severeMuteDurationMs;
         return {
           type: 'mute',
-          duration: policy.severeMuteDurationMs,
-          message: `Student muted for ${policy.severeMuteDurationMs / 3600000} hours due to repeated violations`,
+          duration,
+          message: `Student muted for ${duration / 3600000} hours due to repeated violations`,
         };
       }
 
