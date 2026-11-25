@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci
+# This repository has no committed npm lockfile. Skip development hooks.
+RUN npm install --include=dev --ignore-scripts --package-lock=false --no-audit --no-fund
 
 # Copy source
 COPY src ./src
@@ -26,8 +26,8 @@ RUN apk add --no-cache dumb-init
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# Install production dependencies without the development-only husky hook.
+RUN npm install --omit=dev --ignore-scripts --package-lock=false --no-audit --no-fund
 
 # Copy built application
 COPY --from=builder /app/dist ./dist

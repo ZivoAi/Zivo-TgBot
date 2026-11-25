@@ -9,5 +9,4 @@ README.md
 .env.example
 .eslintrc.js
 jest.config.js
-tsconfig.json
 src/__tests__
